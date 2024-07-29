@@ -1,18 +1,16 @@
-import { createApp } from 'vue'
-import App from './App.vue'
-import router from './router'
-import store from './store'
+import { createApp } from 'vue';
+import App from './App.vue';
+import router from './router';
+import ElementPlus from 'element-plus';
+import 'element-plus/dist/index.css';
 
-import ElementPlus from 'element-plus'
-// import 'element-plus/theme-chalk/index.css'
-import 'element-plus/dist/index.css'
+const app = createApp(App);
+app.use(router);
+app.use(ElementPlus); // 使用 Element Plus
+app.mount('#app');
 
-const vue3App = createApp(App)
-vue3App.use(ElementPlus)
-
-vue3App.use(store)
-vue3App.use(router)
-vue3App.mount('#app')
-
-
-// createApp(App).use(store).use(router).mount('#app')
+if (!localStorage.getItem('user')) {
+    // 如果用户未登录，则导航到登录页面
+    router.push('/login');
+  }
+  
