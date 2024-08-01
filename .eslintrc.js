@@ -1,20 +1,27 @@
 module.exports = {
   root: true,
-  env: {
-    node: true
-  },
-  extends: [
-    'plugin:vue/vue3-essential',
-    '@vue/standard'
-  ],
   parserOptions: {
-    parser: '@babel/eslint-parser'
+    parser: "@typescript-eslint/parser",
+    sourceType: "module",
   },
+  env: {
+    browser: true,
+    node: true,
+    es6: true,
+  },
+  "plugins": ['@typescript-eslint'],
+  extends: [
+    "plugin:vue/vue3-essential",
+    "eslint:recommended",
+    "@vue/typescript/recommended",
+    "@vue/prettier/@typescript-eslint",
+  ],
   rules: {
-    'no-console': process.env.NODE_ENV === 'production' ? 'warn' : 'off',
-    'no-debugger': process.env.NODE_ENV === 'production' ? 'warn' : 'off',
-    "space-before-function-paren": 0,
-    'no-undef': 'off', // 不能有未定义的变量
-    camelcase: 'off' // 关闭驼峰转换
+    "@typescript-eslint/no-explicit-any": "off",
+    '@typescript-eslint/explicit-function-return-type': 'off',
+    '@typescript-eslint/explicit-module-boundary-types': 'off',
+    "no-unused-vars": "off",
+    "@typescript-eslint/no-unused-vars": "off",
+    "no-undef": "off"
   }
-}
+};
