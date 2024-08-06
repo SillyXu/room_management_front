@@ -75,10 +75,10 @@ export default defineComponent({
   setup() {
     const projectName = setting.projectName;
     const version = setting.version;
-    const username = ref("admin");
-    const password = ref("123456");
     const autoLogin = ref(true);
     const loading = ref(false);
+    const username = ref('');
+    const password = ref('');
     const router = useRouter();
     const route = useRoute();
     const userStore = useUserStore();
@@ -91,6 +91,9 @@ export default defineComponent({
           username: username.value,
           password: password.value,
         },
+        headers: {
+        'Content-Type': 'application/json',
+      },
       })
         .then(({ data }: Response) => {
           userStore.saveUser(data as UserState).then(() => {

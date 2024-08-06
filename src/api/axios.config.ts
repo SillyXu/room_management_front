@@ -1,7 +1,7 @@
 import Axios, { AxiosResponse } from "axios";
 import qs from "qs";
 
-const baseIp = "http://localhost:5567";
+const baseIp = "http://127.0.0.1:5000";
 
 export const CONTENT_TYPE = "Content-Type";
 
