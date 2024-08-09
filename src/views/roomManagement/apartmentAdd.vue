@@ -4,7 +4,7 @@
       :body-style="{ padding: '15px' }"
       shadow="hover"
     >
-      <el-link :underline="false">请填写会议基本信息</el-link>
+      <el-link :underline="false">请填写房间基本信息</el-link>
     </el-card>
     <el-card
       :body-style="{ padding: '10px' }"
@@ -19,22 +19,21 @@
         >
           <template #extra>
             <el-form-item
-              label="与会人员："
+              label="房间图片："
               class="form-item"
             >
-              <el-select
-                v-model="joinMemeber.value"
-                multiple
-                placeholder="请选择与会人员"
-                style="width: 100%"
+              <el-upload
+                :action=setApartmentInfo
+                list-type="picture-card"
+                :on-preview="handlePictureCardPreview"
+                :on-remove="handleRemove"
+                :auto-upload="false"
+                :before-upload="beforeUpload"
+                :on-success="handleSuccess"
+                :on-error="handleError"
               >
-                <el-option
-                  v-for="item in joinMemeber.options"
-                  :key="item.value"
-                  :label="item.label"
-                  :value="item.value"
-                />
-              </el-select>
+                <i class="el-icon-plus"></i>
+              </el-upload>
             </el-form-item>
             <el-form-item>
               <div class="text-center">
@@ -56,21 +55,26 @@
 <script lang="ts" setup>
 import { ElMessage } from "element-plus";
 import { reactive, ref, shallowReactive } from "vue";
+import { post } from "@/api/http";
+import { setApartmentInfo } from "@/api/url";
 
+// 更新表单配置
 const formConfig = {
   labelWidth: 100,
   size: "default",
   labelPosition: "right",
 };
+
+// 更新表单项
 const formItems = reactive([
   {
-    label: "会议名称：",
+    label: "房间名称：",
     type: "input",
-    name: "name",
+    name: "room_name",
     value: "",
     maxLength: 50,
     inputType: "text",
-    placeholder: "请输入会议名称",
+    placeholder: "请输入房间名称",
     validator: ({ value = "", placeholder = "" }) => {
       if (!value) {
         ElMessage.error(placeholder);
@@ -80,36 +84,28 @@ const formItems = reactive([
     },
   },
   {
-    label: "会议类型：",
-    type: "radio-group",
-    name: "meetType",
-    associatedOption: "address",
-    value: 0,
-    radioOptions: [
-      {
-        label: "普通",
-        value: 0,
-      },
-      {
-        label: "紧急",
-        value: 1,
-      },
-    ],
-    onChange: (value = 0, assName = "") => {
-      // const assObj = this.formItems.find(
-      //   (it: any) => it.name === assName,
-      // );
-      // this.$set(assObj, "hidden", value === 1);
+    label: "楼层：",
+    type: "input",
+    name: "floor",
+    value: "",
+    inputType: "number",
+    placeholder: "请输入楼层",
+    validator: ({ value = "", placeholder = "" }) => {
+      if (!value) {
+        ElMessage.error(placeholder);
+        return false;
+      }
+      return true;
     },
   },
   {
-    label: "会议内容：",
+    label: "房间号：",
     type: "input",
-    name: "content",
+    name: "room_number",
     value: "",
     maxLength: 10,
     inputType: "text",
-    placeholder: "请输入会议内容",
+    placeholder: "请输入房间号",
     validator: ({ value = "", placeholder = "" }) => {
       if (!value) {
         ElMessage.error(placeholder);
@@ -119,42 +115,65 @@ const formItems = reactive([
     },
   },
   {
-    label: "起止时间：",
-    type: "date-range",
-    name: "startEndTime",
-    placeholder: "请选择会议起止时间",
-    value: "",
-    validator: ({ value = "", placeholder = "" }) => {
-      if (!value) {
-        ElMessage.error(placeholder);
-        return false;
-      }
-      return true;
-    },
-  },
-  {
-    label: "起止地点：",
+    label: "房间类型：",
     type: "select",
-    name: "address",
+    name: "room_type",
     value: "",
-    placeholder: "请选择会议地点",
+    placeholder: "请选择房间类型",
     selectOptions: [
-      {
-        label: "会议一室",
-        value: 1,
-      },
-      {
-        label: "会议二室",
-        value: 2,
-      },
-      {
-        label: "会议三室",
-        value: 3,
-      },
-      {
-        label: "会议四室",
-        value: 4,
-      },
+      { label: "标准间", value: "standard" },
+      { label: "豪华间", value: "luxury" },
+      { label: "套房", value: "suite" },
+    ],
+    validator: ({ value = "", placeholder = "" }) => {
+      if (!value) {
+        ElMessage.error(placeholder);
+        return false;
+      }
+      return true;
+    },
+  },
+  {
+    label: "房间容量：",
+    type: "input",
+    name: "room_capacity",
+    value: "",
+    inputType: "number",
+    placeholder: "请输入房间容量",
+    validator: ({ value = "", placeholder = "" }) => {
+      if (!value) {
+        ElMessage.error(placeholder);
+        return false;
+      }
+      return true;
+    },
+  },
+  {
+    label: "房间价格：",
+    type: "input",
+    name: "room_price",
+    value: "",
+    inputType: "number",
+    placeholder: "请输入房间价格",
+    validator: ({ value = "", placeholder = "" }) => {
+      if (!value) {
+        ElMessage.error(placeholder);
+        return false;
+      }
+      return true;
+    },
+  },
+  {
+    label: "房间状态：",
+    type: "select",
+    name: "room_status",
+    value: "",
+    placeholder: "请选择房间状态",
+    selectOptions: [
+      { label: "空闲", value: "空闲" },
+      { label: "使用中", value: "使用中" },
+      { label: "维修中", value: "维修中" },
+      { label: "报废", value: "报废" },
     ],
     validator: ({ value = "", placeholder = "" }) => {
       if (!value) {
@@ -165,47 +184,96 @@ const formItems = reactive([
     },
   },
 ]);
-const joinMemeber = shallowReactive({
-  value: "",
-  options: [
-    {
-      label: "张三",
-      value: "zhangsan",
-    },
-    {
-      label: "李四",
-      value: "lisi",
-    },
-    {
-      label: "江小鱼",
-      value: "jiangxiaoyu",
-    },
-    {
-      label: "花无缺",
-      value: "huawuque",
-    },
-    {
-      label: "燕南天",
-      value: "yannantian",
-    },
-  ],
-});
-const remark = ref("");
-const submitLoading = ref(false);
-const baseForm = ref();
+
+// 定义一个文件类型的接口
+interface File {
+    name: string;
+    type: string;
+    size: number;
+}
+
+// 处理预览事件
+function handlePictureCardPreview(file: File) {
+  console.log(file);
+}
+
+// 处理移除文件事件
+function handleRemove(file: File, fileList: any[]) {
+  console.log(file, fileList);
+}
+
+// 上传前验证
+function beforeUpload(file: File): boolean {
+  const isJPG = file.type === 'image/jpeg';
+  const isLt2M = file.size / 1024 / 1024 < 2;
+
+  if (!isJPG) {
+    ElMessage.error('上传图片只能是 JPG 格式!');
+  }
+  if (!isLt2M) {
+    ElMessage.error('上传图片大小不能超过 2MB!');
+  }
+  if (file) {
+    // 如果已经有文件，则清除之前的文件
+    handleRemove(file, []);
+  }
+  return isJPG && isLt2M;
+}
+
+// 成功回调
+function handleSuccess(response: any, file: File) {
+  console.log(response);
+  ElMessage.success('上传成功');
+}
+
+// 错误回调
+function handleError(error: any, file: File) {
+  console.error(error);
+  ElMessage.error('上传失败');
+}
+
+// 提交按钮点击事件
 function submit() {
   if (baseForm.value?.checkParams()) {
-    if (!joinMemeber.value) {
-      ElMessage.error("请选择与会人员");
-      return false;
+    if (!file) {
+      ElMessage.error("请上传至少一张房间图片");
+      return;
     }
+
     submitLoading.value = true;
-    setTimeout(() => {
+    // 假设这里有一个上传文件的方法
+    uploadFiles().then(() => {
       ElMessage.success("保存成功");
       submitLoading.value = false;
-    }, 1000);
+    }).catch((error) => {
+      ElMessage.error("上传失败：" + error.message);
+      submitLoading.value = false;
+    });
   }
 }
+
+// 上传文件的方法
+async function uploadFiles() {
+  const formData = new FormData();
+  formData.append('image', file, file.name);  // 这里file.name用于指定文件名
+
+  try {
+    const response = await post({
+      url: setApartmentInfo,
+      data: formData
+    });
+    console.log(response);
+    return response;
+  } catch (error) {
+    console.error('Failed to upload files:', error);
+    throw error;
+  }
+}
+
+
+const submitLoading = ref(false);
+const baseForm = ref();
+let file: File;
 </script>
 
 <style lang="scss" scoped>

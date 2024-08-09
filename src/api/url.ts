@@ -28,7 +28,7 @@ export const getCardList = "/getCardList";
 
 export const getCommentList = "/getCommentList";
 
-export const setApartmentInfo = "setApartmentInfo";
+export const setApartmentInfo = "/addRoomInfo";
 
 export const getApartmentInfo = "/getApartmentInfo";
 
