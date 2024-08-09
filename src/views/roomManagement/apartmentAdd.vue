@@ -1,48 +1,22 @@
 <template>
   <div class="main-container flex flex-direction">
-    <el-card
-      :body-style="{ padding: '15px' }"
-      shadow="hover"
-    >
+    <el-card :body-style="{ padding: '15px' }" shadow="hover">
       <el-link :underline="false">请填写房间基本信息</el-link>
     </el-card>
-    <el-card
-      :body-style="{ padding: '10px' }"
-      shadow="nerve"
-      class="margin-top-xs flex-sub"
-    >
+    <el-card :body-style="{ padding: '10px' }" shadow="nerve" class="margin-top-xs flex-sub">
       <div class="form-wrapper padding-top">
-        <BaseForm
-          ref="baseForm"
-          :form-items="formItems"
-          :config="formConfig"
-        >
+        <BaseForm ref="baseForm" :form-items="formItems" :config="formConfig">
           <template #extra>
-            <el-form-item
-              label="房间图片："
-              class="form-item"
-            >
-              <el-upload
-                :action=setApartmentInfo
-                list-type="picture-card"
-                :on-preview="handlePictureCardPreview"
-                :on-remove="handleRemove"
-                :auto-upload="false"
-                :before-upload="beforeUpload"
-                :on-success="handleSuccess"
-                :on-error="handleError"
-              >
+            <el-form-item label="房间图片：" class="form-item">
+              <el-upload action="/uploadRoomImage" list-type="picture-card" :on-preview="handlePictureCardPreview"
+                :on-remove="handleRemove" :auto-upload="false" :before-upload="beforeUpload" :on-success="handleSuccess"
+                :on-error="handleError">
                 <i class="el-icon-plus"></i>
               </el-upload>
             </el-form-item>
             <el-form-item>
               <div class="text-center">
-                <el-button
-                  type="primary"
-                  size="small"
-                  :loading="submitLoading"
-                  @click="submit"
-                >提交</el-button>
+                <el-button type="primary" size="small" :loading="submitLoading" @click="submit">提交</el-button>
               </div>
             </el-form-item>
           </template>
@@ -56,7 +30,7 @@
 import { ElMessage } from "element-plus";
 import { reactive, ref, shallowReactive } from "vue";
 import { post } from "@/api/http";
-import { setApartmentInfo } from "@/api/url";
+import { setApartmentInfo, uploadRoomImage } from "@/api/url";
 
 // 更新表单配置
 const formConfig = {
@@ -186,10 +160,10 @@ const formItems = reactive([
 ]);
 
 // 定义一个文件类型的接口
-interface File {
-    name: string;
-    type: string;
-    size: number;
+interface File extends Blob {
+  name: string;
+  type: string;
+  size: number;
 }
 
 // 处理预览事件
@@ -212,10 +186,6 @@ function beforeUpload(file: File): boolean {
   }
   if (!isLt2M) {
     ElMessage.error('上传图片大小不能超过 2MB!');
-  }
-  if (file) {
-    // 如果已经有文件，则清除之前的文件
-    handleRemove(file, []);
   }
   return isJPG && isLt2M;
 }
@@ -241,10 +211,16 @@ function submit() {
     }
 
     submitLoading.value = true;
-    // 假设这里有一个上传文件的方法
+    // 上传文件
     uploadFiles().then(() => {
-      ElMessage.success("保存成功");
-      submitLoading.value = false;
+      // 保存房间信息
+      saveRoomInfo().then(() => {
+        ElMessage.success("保存成功");
+        submitLoading.value = false;
+      }).catch((error) => {
+        ElMessage.error("保存失败：" + error.message);
+        submitLoading.value = false;
+      });
     }).catch((error) => {
       ElMessage.error("上传失败：" + error.message);
       submitLoading.value = false;
@@ -255,11 +231,17 @@ function submit() {
 // 上传文件的方法
 async function uploadFiles() {
   const formData = new FormData();
-  formData.append('image', file, file.name);  // 这里file.name用于指定文件名
+  if (file) {  // 检查file是否为有效的File对象
+    formData.append('image', file as File, file.name);  // 这里file.name用于指定文件名
+  }
+  else {
+    ElMessage.error("请上传至少一张房间图片");
+    throw new Error("请上传至少一张房间图片");
+  }
 
   try {
     const response = await post({
-      url: setApartmentInfo,
+      url: uploadRoomImage,
       data: formData
     });
     console.log(response);
@@ -270,10 +252,24 @@ async function uploadFiles() {
   }
 }
 
+// 保存房间信息的方法
+async function saveRoomInfo() {
+  try {
+    const response = await post({
+      url: '/addRoomInfo',
+      data: baseForm.value?.getFormData()
+    });
+    console.log(response);
+    return response;
+  } catch (error) {
+    console.error('Failed to save room info:', error);
+    throw error;
+  }
+}
 
 const submitLoading = ref(false);
 const baseForm = ref();
-let file: File;
+let file: File | null = null;
 </script>
 
 <style lang="scss" scoped>
@@ -283,6 +279,7 @@ let file: File;
     margin: 0 auto;
   }
 }
+
 @media screen and (min-width: 768px) {
   .form-wrapper {
     width: 60%;

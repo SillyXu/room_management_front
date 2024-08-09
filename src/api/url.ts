@@ -30,6 +30,8 @@ export const getCommentList = "/getCommentList";
 
 export const setApartmentInfo = "/addRoomInfo";
 
+export const uploadRoomImage = "/uploadRoomImage";
+
 export const getApartmentInfo = "/getApartmentInfo";
 
 export const setPeopleInfo = "/setPeopleInfo";
