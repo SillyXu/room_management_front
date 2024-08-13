@@ -38,4 +38,8 @@ export const setPeopleInfo = "/setPeopleInfo";
 
 export const getPeopleInfo = "/getPeopleInfo";
 
+export const addCheckinInfo = "/addCheckinInfo";
+
+export const getCheckinInfo = "/getCheckinInfo";
+
 export const baseAddress  = "http://localhost:5567/";

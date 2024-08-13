@@ -84,8 +84,8 @@
 </template>
 
 <script lang="ts" setup>
-import { post } from "@/api/http";
-import { getPeopleInfo } from "@/api/url";
+import { get } from "@/api/http";
+import { getCheckinInfo } from "@/api/url";
 import type { BaseFormType, DialogType } from "@/components/types";
 import { computed, h, onMounted, reactive, ref } from "vue";
 import { ElInput, ElMessage, ElMessageBox } from "element-plus";
@@ -94,44 +94,36 @@ import { useDataTable } from "@/hooks";
 import { FormRenderItem } from "@/components/common/FormRender";
 const DP_CODE_FLAG = "dp_code_";
 
-// 定义Apartment的类型或接口
-interface Apartment {
-  id: number;
-  roomName: string;
-  roomCode: number;
-  floor: string;
-  spareInfo: string;
-  occupant: string;
+// 定义入住信息的类型
+interface CheckinInfo {
+  checkin_id: number;
+  occupant_name: string;
+  employee_id: string;
+  room_number: string;
+  checkin_date: string;
+  checkout_date: string;
 }
 
 const tableColumns = reactive([
   {
     label: "人员名",
-    prop: "peopleName",
-  },
-  {
-    label: "电话",
-    prop: "phoneNum",
-  },
-  {
-    label: "身份证号",
-    prop: "IDnum",
+    prop: "occupant_name",
   },
   {
     label: "一体化账号",
-    prop: "EmployeeNum",
+    prop: "employee_id",
   },
   {
     label: "房间号",
-    prop: "roomNum",
+    prop: "room_number",
   },
   {
     label: "入住时间",
-    prop: "checkin",
+    prop: "checkin_date",
   },
   {
     label: "离店时间",
-    prop: "checkout",
+    prop: "checkout_date",
   },
   {
     label: "操作",
@@ -142,8 +134,8 @@ const tableColumns = reactive([
 // 在setup函数中添加或修改fetchApartmentInfo方法
 const fetchApartmentInfo = async () => {
   try {
-    const response = await post<Apartment[]>({
-      url: getPeopleInfo,
+    const response = await get<[]>({
+      url: getCheckinInfo,
       data: {} // 如果不需要传递数据，可以这样写
       // 或者如果你需要传递数据，例如一个id:
       // data: { id: 123 }
@@ -200,7 +192,7 @@ const formItems = reactive<FormItem[]>([
   {
     label: "人员名",
     type: "input",
-    name: "peopleName",
+    name: "occupant_name",
     value: ref(""),
     maxLength: 50,
     inputType: "text",
@@ -217,47 +209,9 @@ const formItems = reactive<FormItem[]>([
     },
   },
   {
-    label: "电话",
-    type: "input",
-    name: "phoneNum",
-    value: ref(""),
-    maxLength: 50,
-    inputType: "text",
-    placeholder: "请输入电话",
-    validator: (item: any) => {
-      if (!item.value) {
-        ElMessage.error(item.placeholder);
-        return false;
-      }
-      return true;
-    },
-    reset() {
-      this.value = "";
-    },
-  },
-  {
-    label: "身份证号",
-    type: "input",
-    name: "IDnum",
-    value: ref(""),
-    maxLength: 50,
-    inputType: "text",
-    placeholder: "请输入身份证号",
-    validator: (item: any) => {
-      if (!item.value) {
-        ElMessage.error(item.placeholder);
-        return false;
-      }
-      return true;
-    },
-    reset() {
-      this.value = "";
-    },
-  },
-  {
     label: "一体化账号",
     type: "input",
-    name: "employeeNum",
+    name: "employee_id",
     value: ref(""),
     maxLength: 50,
     inputType: "text",
@@ -276,7 +230,7 @@ const formItems = reactive<FormItem[]>([
   {
     label: "房间号",
     type: "input",
-    name: "roomNum",
+    name: "room_number",
     value: ref(""),
     maxLength: 50,
     inputType: "text",
@@ -294,12 +248,12 @@ const formItems = reactive<FormItem[]>([
   },
   {
     label: "到店时间",
-    type: "input",
-    name: "checkin",
+    type: "date",
+    name: "checkin_date",
     value: ref(""),
     maxLength: 50,
-    inputType: "text",
-    placeholder: "请输入到店时间",
+    inputType: "date",
+    placeholder: "请选择到店时间",
     validator: (item: any) => {
       if (!item.value) {
         ElMessage.error(item.placeholder);
@@ -313,12 +267,12 @@ const formItems = reactive<FormItem[]>([
   },
   {
     label: "离店时间",
-    type: "input",
-    name: "checkout",
+    type: "date",
+    name: "checkout_date",
     value: ref(""),
     maxLength: 50,
-    inputType: "text",
-    placeholder: "请输入离店时间",
+    inputType: "date",
+    placeholder: "请选择离店时间",
     validator: (item: any) => {
       if (!item.value) {
         ElMessage.error(item.placeholder);
@@ -355,8 +309,8 @@ const onUpdateItem = (item: any) => {
   });
 };
 const doRefresh = () => {
-  post({
-    url: getPeopleInfo,
+  get({
+    url: getCheckinInfo,
   }).then(handleSuccess);
 };
 function filterItems(

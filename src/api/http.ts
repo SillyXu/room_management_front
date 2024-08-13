@@ -14,6 +14,7 @@ export interface HttpOption {
 export interface Response<T = any> {
   code: number
   msg: string
+  status: number
   data: T
 }
 

@@ -256,7 +256,7 @@ async function uploadFiles() {
 async function saveRoomInfo() {
   try {
     const response = await post({
-      url: '/addRoomInfo',
+      url: setApartmentInfo,
       data: baseForm.value?.getFormData()
     });
     console.log(response);
