@@ -60,7 +60,7 @@ export const asyncRoutes = [
     name: "root",
     component: Layout,
     meta: {
-      title: "Dashboard",
+      title: "主页",
       icon: "HouseIcon",
     },
     children: [
@@ -69,7 +69,7 @@ export const asyncRoutes = [
         name: "Home",
         component: (): any => import("@/views/index/main.vue"),
         meta: {
-          title: "主控台",
+          title: "房间日历",
           affix: true,
           cacheable: true,
         },

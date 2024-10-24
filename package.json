@@ -32,7 +32,13 @@
     "vue-class-component": "^8.0.0-0",
     "vue-router": "^4.0.0-0",
     "vuedraggable": "^4.1.0",
-    "xlsx": "^0.17.0"
+    "xlsx": "^0.17.0",
+    "@fullcalendar/vue3": "^6.1.9",
+    "@fullcalendar/core": "^6.1.9", 
+    "@fullcalendar/daygrid": "^6.1.9",
+    "@fullcalendar/timegrid": "^6.1.9",
+    "@fullcalendar/interaction": "^6.1.9",
+    "@fullcalendar/list": "^6.1.9"
   },
   "devDependencies": {
     "@types/js-cookie": "^2.2.6",

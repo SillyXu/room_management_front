@@ -276,7 +276,7 @@ const baseForm = ref();
 let file: File | null = null;
 
 // 添加 ref 变量
-const uploadRef = shallowRef(null);
+const uploadRef = shallowRef<{ fileList: { raw: File }[] } | null>(null);
 
 // 获取最新的文件列表
 function getLatestFile() {
