@@ -3,119 +3,68 @@
   <div v-loading="loading" class="plan_management">
     <div class="calendarHeader">
       <div class="header_left">
-        <h1>{{ type === '3' ? '计划列表' : calendarTitle }}</h1>
+        <h1>{{ calendarTitle }}</h1>
       </div>
       <div class="header_right">
         <span v-if="type !== '3' && isShowBack" class="blue-color backToday" @click="getToday()">{{
           type === '1' ? '返回本月' : '返回本周'
         }}</span>
-        <el-select
-          v-model="type"
-          placeholder="视图类型"
-          style="width: 80px"
-          size="small"
-          class="header_select"
-          @change="handleChangeType"
-        >
+        <el-select v-model="type" placeholder="视图类型" style="width: 80px" size="small" class="header_select"
+          @change="handleChangeType">
           <el-option label="月" value="1" />
           <el-option label="周" value="2" />
           <el-option label="列" value="3" />
         </el-select>
-        <el-date-picker
-          v-if="type === '1'"
-          v-model="showMonth"
-          type="month"
-          size="small"
-          :clearable="false"
-          placeholder="请选择日期"
-          style="margin-left: 10px; vertical-align: middle"
-          @change="changeDate"
-        />
+        <el-date-picker v-if="type === '1'" v-model="showMonth" type="month" size="small" :clearable="false"
+          placeholder="请选择日期" style="margin-left: 10px; vertical-align: middle" @change="changeDate" />
         <el-button-group v-if="type === '2'" style="margin-left: 10px">
           <el-button size="small" class="el-icon-arrow-left" @click="getPrev()">上一周</el-button>
           <el-button size="small" @click="getNext()">下一周<i class="el-icon-arrow-right" /></el-button>
         </el-button-group>
-        <el-select
-          v-model="planCategoryId"
-          placeholder="计划分类"
-          style="width: 120px"
-          class="header_select"
-          size="small"
-          @change="handleChangePlanId"
-        >
-          <el-option label="全部" value="" />
-          <el-option v-for="item in categoryList" :key="item.id" :label="item.name" :value="item.id" />
-        </el-select>
-        <div class="separator" />
-        <el-tooltip content="类目维护" placement="top" effect="light">
-          <el-button size="small" class="el-icon-setting setting_btn" @click="handleSetting()" />
-        </el-tooltip>
-        <el-button v-if="categoryList.length" size="small" type="primary" class="el-icon-plus" @click="handleAddPlan()">
-          新增计划</el-button
-        >
+
       </div>
     </div>
     <div v-show="type !== '3'" ref="fullcalendar" class="card" />
-    <el-table
-      v-show="type === '3'"
-      ref="tableRef"
-      v-loading="loading"
-      :data="infoList"
-      fit
-      border
-      height="auto"
-      size="medium"
-      class="dark-table base-table format-height-table"
-    >
-      <el-table-column label="标题" prop="title " :min-width="110" show-overflow-tooltip>
+    <el-table v-show="type === '3'" ref="tableRef" v-loading="loading" :data="infoList" fit border height="auto"
+      size="medium" class="dark-table base-table format-height-table">
+      <el-table-column label="房号" prop="room_number" :min-width="110" show-overflow-tooltip>
         <template #default="{ row }">
-          <span class="nowrap blue-color" @click="handleClickList(row)">{{ row.title || '--' }}</span>
+          <span class="nowrap blue-color" @click="handleClickList(row)">{{ row.room_number || '--' }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="类型" prop="planCategoryName" :min-width="100" show-overflow-tooltip>
+      <el-table-column label="出差类型" prop="reason" :min-width="100" show-overflow-tooltip>
         <template #default="{ row }">
-          <span>{{ row.planCategoryName || '--' }}</span>
+          <span>{{ row.reason || '--' }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="负责人/协作者" prop="managerId " :min-width="110" show-overflow-tooltip>
+      <el-table-column label="员工名" prop="occupant_name" :min-width="110" show-overflow-tooltip>
         <template #default="{ row }">
-          <span>{{ row.managerId || '--' }}</span>
+          <span>{{ row.occupant_name || '--' }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="开始时间" prop="startDate " :minwidth="120" show-overflow-tooltip>
+      <el-table-column label="员工ID" prop="employee_id" :min-width="110" show-overflow-tooltip>
         <template #default="{ row }">
-          <span>{{ row.startDate }} {{ row.startDateMinute }}</span>
+          <span>{{ row.employee_id || '--' }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="结束时间" prop="endDate " :minwidth="120" show-overflow-tooltip>
+      <el-table-column label="入住时间" prop="checkin_date" :minwidth="120" show-overflow-tooltip>
         <template #default="{ row }">
-          <span>{{ row.endDate }} {{ row.endDateMinute }}</span>
+          <span>{{ row.checkin_date }} {{ row.startDateMinute }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="操作" :width="100" fixed="right" class-name="fixed-right">
+      <el-table-column label="离开时间" prop="checkout_date" :minwidth="120" show-overflow-tooltip>
         <template #default="{ row }">
-          <span v-if="categoryList.length" class="blue-color" @click="handleEdit(row)">编辑</span>
-          <span class="blue-color" @click="handleDelete(row)">删除</span>
+          <span>{{ row.checkout_date }} {{ row.endDateMinute }}</span>
         </template>
       </el-table-column>
     </el-table>
     <!-- 新建编辑日程 -->
-    <DrawerAddPlan
-      :drawer="drawerVisiable"
-      :drawer-type="drawerType"
-      :category-list="categoryAllList"
-      :detail-data="detailData"
-      @closeDrawer="closeDrawer"
-    />
+    <DrawerAddPlan :drawer="drawerVisiable" :drawer-type="drawerType" :detail-data="detailData"
+      @closeDrawer="closeDrawer" />
     <!-- 类目维护 -->
-    <DialogCategory :dialog-show="dialogCategory" :detail-list="categoryAllList" @closeDialog="closeDialogCategory" />
+    <DialogCategory :dialog-show="dialogCategory" @closeDialog="closeDialogCategory" />
     <!-- 查看计划 -->
-    <DialogCalendar
-      :dialog-show="dialogCalendar"
-      :detail-info="detailInfo"
-      :category-json="categoryJSON"
-      @closeDialog="closeDialogCalendar"
-    />
+    <DialogCalendar :dialog-show="dialogCalendar" :detail-info="detailInfo" @closeDialog="closeDialogCalendar" />
   </div>
 </template>
 
@@ -140,6 +89,8 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import listPlugin from '@fullcalendar/list';
 import interactionPlugin from '@fullcalendar/interaction';
+import { get } from "@/api/http";
+import { getCheckinInfo } from "@/api/url";
 
 export default {
   name: 'PlanManagement',
@@ -181,67 +132,6 @@ export default {
       dialogCategory: false, // 计划分类弹出窗
       dialogCalendar: false, // 计划详情弹出窗
       infoList: [], // 日历显示的列信息
-      categoryJSON: {
-        '1749704445988134980': {
-          id: '1749704445988134980',
-          name: '内审计划',
-          code: '2',
-          status: 1,
-          color: 'orange'
-        },
-        '1752892951510384728': {
-          id: '1752892951510384728',
-          name: '设备使用计划',
-          code: 'BH2',
-          status: 1,
-          color: 'red'
-        },
-        '1752893602613166115': {
-          id: '1752893602613166115',
-          name: '外审计划',
-          code: 'BH3',
-          status: 1,
-          color: 'green'
-        },
-        '1752926256591011902': {
-          id: '1752926256591011902',
-          name: '纠正计划',
-          code: 'BH4',
-          status: 1,
-          color: 'purple'
-        }
-      }, // 计划分类json
-      categoryAllList: [
-        {
-          id: '1749704445988134980',
-          name: '内审计划',
-          code: '2',
-          status: 1,
-          color: 'orange'
-        },
-        {
-          id: '1752892951510384728',
-          name: '设备使用计划',
-          code: 'BH2',
-          status: 1,
-          color: 'red'
-        },
-        {
-          id: '1752893602613166115',
-          name: '外审计划',
-          code: 'BH3',
-          status: 1,
-          color: 'green'
-        },
-        {
-          id: '1752926256591011902',
-          name: '纠正计划',
-          code: 'BH4',
-          status: 1,
-          color: 'purple'
-        }
-      ], // 全部计划分类
-      categoryList: [] // 已启用计划分类
     });
     onMounted(() => {
       initCalendar();
@@ -285,7 +175,7 @@ export default {
             childEl.innerHTML = arg.event.extendedProps.startDateMinute;
             italicEl.append(childEl);
           }
-          italicEl.append(arg.event.title);
+          italicEl.append(arg.event.room_number);
           italicEl.setAttribute('class', `plan_title ${arg.event.extendedProps.class}`);
           return { domNodes: [italicEl] };
         },
@@ -351,222 +241,51 @@ export default {
     const handleSetting = () => {
       state.dialogCategory = true;
     };
-    const getCalendarList = () => {
+
+    const processCalendarData = (data) => {
       state.Tcalendar.getEventSources().forEach(item => {
         item.remove();
       });
-      // 根据你的接口获取日历中的计划信息，这里为了展示直接把数据展示出来
-      // 其中class字段是为了和colorJSON做匹配方便知道显示什么颜色
-      state.infoList = [
-        {
-          id: '1843904335660290114',
-          planCategoryId: '1749704445988134980',
-          planCategoryName: '内审计划',
-          planCategoryColor: '',
-          title: '123',
-          status: '',
-          fileIdList: [],
-          managerId: '1526076003284926557',
-          startDate: '2024-10-16',
-          startDateMinute: '',
-          endDate: '2024-10-17',
-          endDateMinute: '',
-          isAllDay: 1,
-          description: '',
-          attachmentVoList: [],
-          createBy: '1526076003284926557',
-          createTime: '2024-10-09T06:40:26.000+00:00',
-          class: 'orange',
-          start: '2024-10-16',
-          end: '2024-10-18'
-        },
-        {
-          id: '1843904335660290114',
-          planCategoryId: '1749704445988134980',
-          planCategoryName: '内审计划',
-          planCategoryColor: '',
-          title: '123',
-          status: '',
-          fileIdList: [],
-          managerId: '1526076003284926557',
-          startDate: '2024-10-16',
-          startDateMinute: '',
-          endDate: '2024-10-17',
-          endDateMinute: '',
-          isAllDay: 1,
-          description: '',
-          attachmentVoList: [],
-          createBy: '1526076003284926557',
-          createTime: '2024-10-09T06:40:26.000+00:00',
-          class: 'orange',
-          start: '2024-10-16',
-          end: '2024-10-18'
-        },
-        {
-          id: '1843904335660290114',
-          planCategoryId: '1749704445988134980',
-          planCategoryName: '内审计划',
-          planCategoryColor: '',
-          title: '123',
-          status: '',
-          fileIdList: [],
-          managerId: '1526076003284926557',
-          startDate: '2024-10-16',
-          startDateMinute: '',
-          endDate: '2024-10-17',
-          endDateMinute: '',
-          isAllDay: 1,
-          description: '',
-          attachmentVoList: [],
-          createBy: '1526076003284926557',
-          createTime: '2024-10-09T06:40:26.000+00:00',
-          class: 'orange',
-          start: '2024-10-16',
-          end: '2024-10-18'
-        },
-        {
-          id: '1843904335660290114',
-          planCategoryId: '1749704445988134980',
-          planCategoryName: '内审计划',
-          planCategoryColor: '',
-          title: '123',
-          status: '',
-          fileIdList: [],
-          managerId: '1526076003284926557',
-          startDate: '2024-10-16',
-          startDateMinute: '',
-          endDate: '2024-10-17',
-          endDateMinute: '',
-          isAllDay: 1,
-          description: '',
-          attachmentVoList: [],
-          createBy: '1526076003284926557',
-          createTime: '2024-10-09T06:40:26.000+00:00',
-          class: 'orange',
-          start: '2024-10-16',
-          end: '2024-10-22'
-        },
-        {
-          id: '1843904335660290114',
-          planCategoryId: '1749704445988134980',
-          planCategoryName: '内审计划',
-          planCategoryColor: '',
-          title: '123',
-          status: '',
-          fileIdList: [],
-          managerId: '1526076003284926557',
-          startDate: '2024-10-16',
-          startDateMinute: '',
-          endDate: '2024-10-17',
-          endDateMinute: '',
-          isAllDay: 1,
-          description: '',
-          attachmentVoList: [],
-          createBy: '1526076003284926557',
-          createTime: '2024-10-09T06:40:26.000+00:00',
-          class: 'orange',
-          start: '2024-10-16',
-          end: '2024-10-22'
-        },
-        {
-          id: '1843904335660290114',
-          planCategoryId: '1749704445988134980',
-          planCategoryName: '内审计划',
-          planCategoryColor: '',
-          title: '123',
-          status: '',
-          fileIdList: [],
-          managerId: '1526076003284926557',
-          startDate: '2024-10-16',
-          startDateMinute: '',
-          endDate: '2024-10-17',
-          endDateMinute: '',
-          isAllDay: 1,
-          description: '',
-          attachmentVoList: [],
-          createBy: '1526076003284926557',
-          createTime: '2024-10-09T06:40:26.000+00:00',
-          class: 'orange',
-          start: '2024-10-16',
-          end: '2024-10-22'
-        }
-      ];
+      return data.map(item => ({
+        title: item.room_number,
+        start: item.checkin_date,
+        end: item.checkout_date,
+        item,
+      }));
+    };
+    const getCalendarList = async () => {
+
+      try {
+        const response = await get({
+          url: getCheckinInfo,
+          data: {} 
+        });
+        // 处理响应数据
+        console.log(response.data);
+        // 可以将数据存储到状态中，例如:
+        state.infoList = response.data; // 假设响应数据在data字段中
+        console.log(state.infoList);
+      } catch (error) {
+        console.error('获取入住信息失败:', error);
+      }
+      
+      state.infoList = processCalendarData(state.infoList);
+      
       state.Tcalendar.addEventSource(state.infoList);
     };
     // 点击计划查看
     const handleClick = info => {
-      // const detail = info.event._def;
-      state.detailInfo = {
-        id: '1843904335660290114',
-        planCategoryId: '1749704445988134980',
-        planCategoryName: '内审计划',
-        planCategoryColor: '',
-        title: '123',
-        status: '',
-        fileIdList: [],
-        managerId: '1526076003284926557',
-        startDate: '2024-10-16',
-        startDateMinute: '',
-        endDate: '2024-10-17',
-        endDateMinute: '',
-        isAllDay: 1,
-        description: '',
-        attachmentVoList: [],
-        createBy: '1526076003284926557',
-        createTime: '2024-10-09T06:40:26.000+00:00'
-      };
-      state.dialogCalendar = true;
+      const detail = info.event._def;
       // 接口查看详情但为了方便展示变量值直接写出来
-      // plandetailId(detail.publicId).then(res => {
-      //   if (res) {
-      //     state.detailInfo = res.data.data;
-      //     console.log(res.data.data);
-      //     state.dialogCalendar = true;
-      //   }
-      // });
+      plandetailId(detail.publicId).then(res => {
+        if (res) {
+          state.detailInfo = res.data.data;
+          console.log(res.data.data);
+          state.dialogCalendar = true;
+        }
+      });
     };
-    // 列视图点击查看
-    const handleClickList = row => {
-      // plandetailId(row.id).then(res => {
-      //   if (res) {
-      //     state.detailInfo = res.data.data;
-      //     state.dialogCalendar = true;
-      //   }
-      // });
-    };
-    // 删除
-    const handleDelete = row => {
-      proxy
-        .$confirm('是否确认删除', '删除确认', {
-          confirmButtonText: '确认删除',
-          cancelButtonText: '取消',
-          showCancelButton: true,
-          closeOnClickModal: false,
-          type: 'warning'
-        })
-        .then(() => {
-          // 删除计划的接口
-          // deletePlanDetail(row.id).then(function (res) {
-          //   if (res) {
-          //     proxy.$message.success('删除成功！');
-          //     getCalendarList();
-          //   }
-          // });
-        })
-        .catch(() => {});
-    };
-    // 编辑
-    const handleEdit = row => {
-      state.loading = true;
-      // plandetailId(row.id).then(res => {
-      //   state.loading = false;
-      //   if (res) {
-      //     state.detailData = res.data.data;
-      //     state.drawerType = 'edit';
-      //     state.drawerVisiable = true;
-      //   }
-      // });
-    };
+
     const closeDialog = () => {
       state.dialogVisiable = false;
     };
@@ -614,34 +333,15 @@ export default {
       state.drawerVisiable = true;
       state.drawerType = 'add';
       state.detailData = {
-        managerIds: 'managerIds', // 当前登录人的id,为了方便后续实现只有创建人才可以修改的限制
-        fileList: [],
-        isAllDay: 0,
         startDate: formatDate(new Date()),
         endDate: formatDate(new Date()),
-        startDateMinute: new Date().getHours() < 23 ? new Date().getHours() + 1 + ':00' : '23:00',
-        endDateMinute: new Date().getHours() < 22 ? new Date().getHours() + 2 + ':00' : '23:00'
       };
     };
     // 拖拽计划时触发
     const handleDrap = info => {
       const params = { ...info.event.extendedProps, id: info.event.id };
       params.startDate = formatCalendar(info.event.start);
-      if (info.event.allDay) {
-        // 全天
-        params.startDateMinute = '';
-        params.endDateMinute = '';
-        params.isAllDay = 1;
-        params.endDate = info.event.end
-          ? formatCalendar(new Date(info.event.end).getTime() - 24 * 3600 * 1000)
-          : formatCalendar(info.event.start);
-      } else {
-        // 非全天
-        params.startDateMinute = formatCalendar(info.event.start, 'hour');
-        params.endDateMinute = formatCalendar(new Date(info.event.end), 'hour');
-        params.endDate = info.event.end ? formatCalendar(new Date(info.event.end)) : formatCalendar(info.event.start);
-        params.isAllDay = 0;
-      }
+      params.endDate = info.event.end;
       // 拖拽编辑计划的接口
       console.log(params);
       // params = {
@@ -676,99 +376,27 @@ export default {
     const handleEventResize = info => {
       const params = { ...info.event.extendedProps, id: info.event.id };
       params.startDate = formatCalendar(info.event.start);
-      if (info.event.allDay) {
-        // 全天
-        params.startDateMinute = '';
-        params.endDateMinute = '';
-        params.isAllDay = 1;
-        params.endDate = info.event.end
-          ? formatCalendar(new Date(info.event.end).getTime() - 24 * 3600 * 1000)
-          : formatCalendar(info.event.start);
-      } else {
-        // 非全天
-        params.startDateMinute = formatCalendar(info.event.start, 'hour');
-        params.endDateMinute = formatCalendar(new Date(info.event.end), 'hour');
-        params.endDate = info.event.end ? formatCalendar(new Date(info.event.end)) : formatCalendar(info.event.start);
-        params.isAllDay = 0;
-      }
+      params.endDate = info.event.end;
       console.log(params);
-      // params = {
-      //   planCategoryId: '1749704445988134980',
-      //   planCategoryName: '内审计划',
-      //   planCategoryColor: '',
-      //   status: '',
-      //   fileIdList: [],
-      //   managerId: '1526076003284926557',
-      //   startDate: '2024-10-16',
-      //   startDateMinute: '',
-      //   endDate: '2024-10-18',
-      //   endDateMinute: '',
-      //   isAllDay: 1,
-      //   description: '',
-      //   attachmentVoList: [],
-      //   createBy: '1526076003284926557',
-      //   createTime: '2024-10-09T06:40:26.000+00:00',
-      //   class: 'orange',
-      //   id: '1843904335660290114'
-      // };
-      // 调整计划大小触发的接口
-      // savePlanDetail(params).then(res => {
-      //   if (res) {
-      //     proxy.$message.success('修改成功！');
-      //     getCalendarList();
-      //   }
-      // });
     };
     // 拖拽触发
     const handleSelectDate = info => {
       if (info.view.type === 'timeGridWeek') {
-        // 周视图
-        if (info.allDay) {
-          state.detailData = {
-            startDate: formatCalendar(info.startStr),
-            endDate: formatCalendar(new Date(info.endStr).getTime() - 24 * 3600 * 1000),
-            managerIds: 'managerIds', // 当前系统登陆人的id，业务场景只有创建人才可以编辑计划，其他人均只能查看
-            fileList: [],
-            startDateMinute: '',
-            endDateMinute: '',
-            isAllDay: 1
-          };
-        } else {
-          state.detailData = {
-            startDate: formatCalendar(info.startStr),
-            endDate: formatCalendar(info.endStr),
-            managerIds: 'managerIds', // 当前系统登陆人的id，业务场景只有创建人才可以编辑计划，其他人均只能查看
-            fileList: [],
-            startDateMinute: formatCalendar(info.startStr, 'hour'),
-            endDateMinute: formatCalendar(info.endStr, 'hour'),
-            isAllDay: 0
-          };
-        }
+        state.detailData = {
+          startDate: formatCalendar(info.startStr),
+          endDate: formatCalendar(new Date(info.endStr).getTime() - 24 * 3600 * 1000),
+        };
       } else {
         // 月视图
-        if (info.startStr === formatDate(new Date(info.endStr).getTime() - 24 * 3600 * 1000)) {
-          // 只选择一天，默认非全天
-          state.detailData = {
-            startDate: info.startStr,
-            endDate: formatDate(new Date(info.endStr).getTime() - 24 * 3600 * 1000),
-            managerIds: 'managerIds', // 当前系统登陆人的id，业务场景只有创建人才可以编辑计划，其他人均只能查看
-            fileList: [],
-            startDateMinute: new Date().getHours() < 23 ? new Date().getHours() + 1 + ':00' : '23:00',
-            endDateMinute: new Date().getHours() < 22 ? new Date().getHours() + 2 + ':00' : '23:00',
-            isAllDay: 0
-          };
-        } else {
-          // 跨天，默认全天
-          state.detailData = {
-            startDate: info.startStr,
-            endDate: formatDate(new Date(info.endStr).getTime() - 24 * 3600 * 1000),
-            managerIds: 'managerIds', // 当前系统登陆人的id，业务场景只有创建人才可以编辑计划，其他人均只能查看
-            fileList: [],
-            startDateMinute: '',
-            endDateMinute: '',
-            isAllDay: 1
-          };
-        }
+        state.detailData = {
+          startDate: info.startStr,
+          endDate: formatDate(new Date(info.endStr).getTime() - 24 * 3600 * 1000),
+          managerIds: 'managerIds', // 当前系统登陆人的id，业务场景只有创建人才可以编辑计划，其他人均只能查看
+          fileList: [],
+          startDateMinute: '',
+          endDateMinute: '',
+          isAllDay: 1
+        };
       }
       state.drawerVisiable = true;
       state.drawerType = 'add';
@@ -792,9 +420,6 @@ export default {
       getPrev,
       handleDrap,
       handleAddPlan,
-      handleClickList,
-      handleDelete,
-      handleEdit,
       handleEventResize,
       handleChangePlanId,
       getNext,
@@ -820,20 +445,24 @@ export default {
   margin: 20px;
   padding: 20px;
 }
+
 .calendarHeader {
   margin: 0 0 20px 0;
   display: flex;
   flex-direction: row;
   justify-content: space-between;
+
   .header_select {
     margin: 0 0 0 10px;
     display: inline-block;
     vertical-align: middle;
   }
+
   .separator {
     display: inline-block;
     position: relative;
     margin: 0 12px;
+
     &:after {
       content: '';
       position: absolute;
@@ -845,6 +474,7 @@ export default {
     }
   }
 }
+
 h1 {
   font-size: 20px;
   font-weight: 500;
@@ -855,11 +485,10 @@ h1 {
   display: inline-block;
   color: #303133;
 }
+
 // .el-button-group {
 //   vertical-align: top;
-// }
-</style>
+// }</style>
 <style lang="scss" scoped>
 @import './calendar/fullcalendar.scss';
 </style>
-

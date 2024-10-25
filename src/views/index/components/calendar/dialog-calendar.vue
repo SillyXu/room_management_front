@@ -1,7 +1,7 @@
 <template>
     <el-dialog
       v-model="dialogVisiable"
-      title="查看计划"
+      title="查看预定信息"
       :modal="false"
       :close-on-click-modal="true"
       :width="500"
@@ -9,13 +9,9 @@
       @close="handleClose"
     >
       <div v-if="dialogVisiable" v-loading="dialogLoading">
-        <div :class="`fc-event dialog_header ${categoryJson[formData.planCategoryId]?.color}`">
+        <div :class="`fc-event dialog_header ${categoryJson[formData.reason]?.color}`">
           <div class="dialog_title">
-            {{ formData.title || '--' }}
-            <div class="dialog_icon">
-              <i v-if="isCanEdit" class="el-icon-edit" @click="handleEdit()" />
-              <i class="el-icon-delete" @click="handleDelete()" />
-            </div>
+            {{ formData.room_number || '--' }}
           </div>
         </div>
         <el-form
@@ -29,52 +25,23 @@
         >
           <el-row>
             <el-col :span="24">
-              <el-form-item prop="managerId" label="负责人/协作者：">
-                <span>{{ formData.managerId}}</span>
+              <el-form-item prop="occupant_name" label="入住人：">
+                <span>{{ formData.occupant_name}}</span>
               </el-form-item>
             </el-col>
             <el-col :span="24">
-              <el-form-item prop="planCategoryName" label="类型：">
-                <span>{{ formData.planCategoryName }}</span>
+              <el-form-item prop="reason" label="出差类型：">
+                <span>{{ formData.reason }}</span>
               </el-form-item>
             </el-col>
             <el-col :span="24">
-              <el-form-item prop="title" label="计划时间：">
+              <el-form-item prop="title" label="时间：">
                 <span
-                  >{{ formData.startDate }} {{ formData.startDateMinute }} ~ {{ formData.endDate }}
-                  {{ formData.endDateMinute }}</span
+                  >{{ formData.checkin_date }}  ~ {{ formData.checkout_date }}</span
                 >
               </el-form-item>
             </el-col>
             <el-divider />
-            <el-col :span="24">
-              <div class="form_item_header">
-                <div class="label">描述：</div>
-                <span v-if="formData.description" class="font-sm" @click="isShowAll = !isShowAll">{{
-                  isShowAll ? '收起详情' : '展开详情'
-                }}</span>
-              </div>
-              <div
-                :class="`form_item_content ${isShowAll ? 'packDown' : 'packUp'} ${formData.description ? '' : 'empty'} ${
-                  formData.attachmentVoList.length ? 'margin_Bot' : ''
-                }`"
-                v-html="formData.description ? formData.description : '暂无描述'"
-              />
-              <div v-for="item in formData.attachmentVoList" :key="item.fileId" class="fileItem" @click="downLoad(item)">
-                {{ item.fileName }}
-              </div>
-            </el-col>
-            <el-divider />
-            <el-col :span="24">
-              <div class="form-item_flex">
-                <el-form-item prop="createTime" label="创建时间：" label-width="70px">
-                  <span>{{ formatDate(formData.createTime) }}</span>
-                </el-form-item>
-                <el-form-item prop="createBy" label="创建人：" label-width="60px">
-                  {{ formData.createBy }}
-                </el-form-item>
-              </div>
-            </el-col>
           </el-row>
         </el-form>
       </div>
@@ -95,96 +62,30 @@
         type: Object,
         default: () => {}
       },
-      categoryJson: {
-        type: Object,
-        default: () => {}
-      }
     },
     emits: ['closeDialog'],
     setup(props, context) {
       const { proxy } = getCurrentInstance();
       const state = reactive({
-        formData: {
-          attachmentVoList: []
-        },
+        formData: {},
         formRef: ref(),
-        dialogTitle: '新增日程',
-        isShowAll: false,
         type: '',
-        isAllDay: false, // 是否是全天
-        colorJSON: {
-          绿色: 'green',
-          红色: 'red',
-          橙色: 'orange',
-          黄色: 'yellow',
-          青色: 'cyan',
-          蓝色: 'blue',
-          紫色: 'purple',
-          品红色: 'magenta'
-        },
-        categoryJson: {},
-        nameList: [],
         dialogLoading: false,
         ruleInfo: {},
-        isCanEdit: false, // 是否可以编辑
-        differences: 0, // 开始时间结束时间相差天数
         isEdit: false,
         dialogVisiable: false,
-        ruleForm: ref(),
-        inputRef: ref(),
         loading: false
       });
       watch(props, newValue => {
         state.dialogVisiable = newValue.dialogShow;
-        if (state.dialogVisiable) {
-          state.categoryJson = props.categoryJson;
-          state.isCanEdit = Object.values(state.categoryJson).some(item => {
-            return item.status === 1;
-          });
-          state.formData = props.detailInfo;
-        }
       });
-      // 下载附件
-      const downLoad = fileItem => {
-        window.open(fileItem.fileUrl);
-      };
-      // 删除计划
-      const handleDelete = () => {
-        proxy
-          .$confirm('是否确认删除', '删除确认', {
-            confirmButtonText: '确认删除',
-            cancelButtonText: '取消',
-            showCancelButton: true,
-            closeOnClickModal: false,
-            type: 'warning'
-          })
-          .then(() => {
-            state.dialogLoading = true;
-            deletePlanDetail(state.formData.id).then(function (res) {
-              state.dialogLoading = false;
-              if (res) {
-                proxy.$message.success('删除成功！');
-                state.dialogVisiable = false;
-                context.emit('closeDialog', { isRefresh: true });
-              }
-            });
-          })
-          .catch(() => {});
-      };
-      // 编辑计划
-      const handleEdit = () => {
-        state.dialogVisiable = false;
-        context.emit('closeDialog', { isRefresh: false, isEdit: true, info: state.formData });
-      };
+
       // 关闭弹出窗
       const handleClose = () => {
         context.emit('closeDialog');
       };
       return {
         ...toRefs(state),
-        downLoad,
-        handleDelete,
-        handleEdit,
         handleClose,
         formatDate
        };
