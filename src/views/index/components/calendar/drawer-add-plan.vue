@@ -297,6 +297,7 @@
       };
       // 新增、编辑
       const onSubmit = () => {
+        debugger
         proxy.$refs['formRef'].validate(valid => {
           if (valid) {
             state.drawerLoading = true;

@@ -7,22 +7,6 @@
       <div class="form-wrapper padding-top">
         <BaseForm ref="baseForm" :form-items="formItems" :config="formConfig">
           <template #extra>
-            <el-form-item label="房间图片：" class="form-item">
-              <el-upload
-                ref="uploadRef"
-                action="/uploadRoomImage"
-                list-type="picture-card"
-                :on-preview="handlePictureCardPreview"
-                :on-remove="handleRemove"
-                :auto-upload="false"
-                :before-upload="beforeUpload"
-                :on-success="handleSuccess"
-                :on-error="handleError"
-                @change="handleFileChange"
-              >
-                <i class="el-icon-plus"></i>
-              </el-upload>
-            </el-form-item>
             <el-form-item>
               <div class="text-center">
                 <el-button type="primary" size="small" :loading="submitLoading" @click="submit">提交</el-button>
@@ -35,12 +19,12 @@
   </div>
 </template>
 
-
 <script lang="ts" setup>
 import { ElMessage } from "element-plus";
-import { reactive, ref, shallowRef} from "vue";
-import { post } from "@/api/http";
-import { setApartmentInfo, uploadRoomImage } from "@/api/url";
+import { reactive, ref } from "vue";
+import { post, Response } from "@/api/http";
+import { setApartmentInfo } from "@/api/url";
+
 
 // 更新表单配置
 const formConfig = {
@@ -169,122 +153,57 @@ const formItems = reactive([
   },
 ]);
 
-// 文件类型的接口
-interface File extends Blob {
-  name: string;
-  type: string;
-  size: number;
+
+// Submit loading state
+const submitLoading = ref(false);
+
+
+
+// Base form reference
+const baseForm = ref();
+
+// Refresh page method
+function refreshPage() {
+  location.reload();
 }
 
-// 处理预览事件
-function handlePictureCardPreview(file: File) {
-  console.log(file);
-}
-
-// 处理移除文件事件
-function handleRemove(file: File, fileList: any[]) {
-  console.log(file, fileList);
-}
-
-// 上传前验证
-function beforeUpload(file: File): boolean {
-  // 上传前验证...
-  return false;
-}
-
-// 成功回调
-function handleSuccess(response: any, file: File) {
-  console.log(response);
-  ElMessage.success('上传成功');
-}
-
-// 错误回调
-function handleError(error: any, file: File) {
-  console.error(error);
-  ElMessage.error('上传失败');
-}
-
-// 文件列表变化时的处理
-function handleFileChange(file: any, fileList: any[], event: any) {
-  // 更新 file 变量
-  const latestFile = event.raw;  // 从 event 中获取原始文件对象
-  file = latestFile;
-}
-
-// 提交按钮点击事件
 function submit() {
   if (baseForm.value?.checkParams()) {
     submitLoading.value = true;
-    // 上传文件
-    uploadFiles().then(() => {
-      // 保存房间信息
-      saveRoomInfo().then(() => {
-        ElMessage.success("保存成功");
+
+    // 构建表单数据
+    const formData = {
+      room_name: formItems[0].value,
+      floor: formItems[1].value,
+      room_number: formItems[2].value,
+      room_type: formItems[3].value,
+      room_capacity: formItems[4].value,
+      room_price: formItems[5].value,
+      room_status: formItems[6].value,
+    };
+
+    post({
+      url: setApartmentInfo,
+      data: formData,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    })
+      .then((response: Response) => {
+        // 检查响应中的状态码或特定字段来判断是否成功
+        if (response.code === 200 || response.code === 0 || response.code === 201) { // 假设200或code为0表示成功
+          ElMessage.success("保存成功");
+          refreshPage(); // 刷新页面
+        } else {
+          ElMessage.error("保存失败，请检查输入信息");
+        }
         submitLoading.value = false;
-      }).catch((error) => {
-        ElMessage.error("保存失败：" + error.message);
+      })
+      .catch(error => {
+        ElMessage.error("保存失败，请检查网络或稍后再试");
+        console.error("Error:", error);
         submitLoading.value = false;
       });
-    }).catch((error) => {
-      ElMessage.error("上传失败：" + error.message);
-      submitLoading.value = false;
-    });
-  }
-}
-
-// 上传文件的方法
-async function uploadFiles() {
-  getLatestFile();  // 更新 file 变量
-  if (!file) {
-    ElMessage.error("请上传至少一张房间图片");
-    throw new Error("请上传至少一张房间图片");
-  }
-
-  const formData = new FormData();
-  formData.append('image', file, file.name);
-
-  try {
-    const response = await post({
-      url: uploadRoomImage,
-      data: formData
-    });
-    console.log(response);
-    return response;
-  } catch (error) {
-    console.error('Failed to upload files:', error);
-    throw error;
-  }
-}
-
-// 保存房间信息的方法
-async function saveRoomInfo() {
-  try {
-    const response = await post({
-      url: setApartmentInfo,
-      data: baseForm.value?.getFormData()
-    });
-    console.log(response);
-    return response;
-  } catch (error) {
-    console.error('Failed to save room info:', error);
-    throw error;
-  }
-}
-
-const submitLoading = ref(false);
-const baseForm = ref();
-let file: File | null = null;
-
-// 添加 ref 变量
-const uploadRef = shallowRef<{ fileList: { raw: File }[] } | null>(null);
-
-// 获取最新的文件列表
-function getLatestFile() {
-  if (uploadRef.value && uploadRef.value.fileList) {
-    const fileList = uploadRef.value.fileList;
-    if (fileList.length > 0) {
-      file = fileList[fileList.length - 1].raw;  // 获取最新文件
-    }
   }
 }
 </script>

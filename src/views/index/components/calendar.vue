@@ -70,7 +70,6 @@
 
 <script>
 import { reactive, toRefs, ref, onMounted, getCurrentInstance } from 'vue';
-// 处理时间相关函数，函数已在下面列出，记得修改'@/utils/formatTime'路径
 import {
   formatDateFilter,
   formatDateDay,
@@ -79,11 +78,8 @@ import {
   formatYM,
   getWeekNumber
 } from '@/utils/formatTime';
-// 新增计划弹出框
 import DrawerAddPlan from './calendar/drawer-add-plan.vue';
-// 查看计划弹出框
 import DialogCalendar from './calendar/dialog-calendar.vue';
-// 下载安装的插件相关
 import { Calendar } from '@fullcalendar/core';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
@@ -98,12 +94,11 @@ export default {
   setup() {
     const { proxy } = getCurrentInstance();
     const state = reactive({
-      calendarTitle: new Date().getFullYear() + '年' + Number(new Date().getMonth() + 1) + '月', // 日历头部显示文字
+      calendarTitle: new Date().getFullYear() + '年' + Number(new Date().getMonth() + 1) + '月',
       dialogVisiable: false,
-      showMonth: formatYM(new Date()), // 显示月份
+      showMonth: formatYM(new Date()),
       loading: false,
-      isShowBack: false, // 是否显示回到当月或当周
-      planCategoryId: '', // 计划分类Id
+      isShowBack: false,
       type: '1',
       dialogType: '',
       detailInfo: {},
@@ -129,14 +124,16 @@ export default {
         3: 'listMonth'
       },
       nowDate: new Date(),
-      dialogCategory: false, // 计划分类弹出窗
-      dialogCalendar: false, // 计划详情弹出窗
-      infoList: [], // 日历显示的列信息
+      dialogCategory: false,
+      dialogCalendar: false,
+      infoList: [],
     });
-    onMounted(() => {
+
+    onMounted(async () => {
       initCalendar();
-      getCalendarList();
+      await getCalendarList();
     });
+
     const initCalendar = () => {
       state.Tcalendar = new Calendar(state.fullcalendar, {
         plugins: [dayGridPlugin, timeGridPlugin, listPlugin, interactionPlugin],
@@ -144,16 +141,15 @@ export default {
         aspectRatio: 2.2,
         locale: 'zh-cn',
         handleWindowResize: true,
-        editable: true, // 允许编辑表格
+        editable: true,
         droppable: true,
         eventDurationEditable: true,
         eventResizableFromStart: true,
-        selectable: true, // 允许用户通过单击和拖动来突出显示多个日期或时间段
-        firstDay: 1, // 设置一周中显示的第一天是哪天，周日是0，周一是1，类推。
-        unselectAuto: true, // 当点击页面日历以外的位置时，是否自动取消当前的选中状态
+        selectable: true,
+        firstDay: 1,
+        unselectAuto: true,
         unselectCancel: '.el-drawer',
         dayMaxEvents: true,
-        // eventLimit: true,
         headerToolbar: false,
         buttonText: {
           today: '回到今天',
@@ -165,30 +161,21 @@ export default {
         allDayText: '全天',
         events: state.infoList,
         eventClassNames: function (arg) {
-          // 添加自定义class
           return [arg.event.extendedProps.class];
         },
         eventContent: function (arg) {
           const italicEl = document.createElement('div');
-          if (arg.event.extendedProps.startDateMinute) {
-            const childEl = document.createElement('span');
-            childEl.innerHTML = arg.event.extendedProps.startDateMinute;
-            italicEl.append(childEl);
-          }
-          italicEl.append(arg.event.room_number);
+          italicEl.append('房间号:', arg.event.title, ' | 入住人:', arg.event.extendedProps.occupant_name);
           italicEl.setAttribute('class', `plan_title ${arg.event.extendedProps.class}`);
           return { domNodes: [italicEl] };
         },
         eventDrop: function (info) {
-          // 拖拽停止时触发
           handleDrap(info);
         },
         eventClick: function (info) {
-          // 点击查看时触发
           handleClick(info);
         },
         select: function (info) {
-          // 视图选择日期触发
           handleSelectDate(info);
         },
         eventResize: function (info) {
@@ -243,47 +230,55 @@ export default {
     };
 
     const processCalendarData = (data) => {
-      state.Tcalendar.getEventSources().forEach(item => {
-        item.remove();
-      });
       return data.map(item => ({
+        id: String(item.checkin_id),
         title: item.room_number,
+        occupant_name: item.occupant_name,
+        employee_id: item.employee_id,
+        room_number: item.room_number,
+        reason: item.reason,
+        class: item.reason === '因公' ? 'green' : 'orange',
         start: item.checkin_date,
         end: item.checkout_date,
-        item,
+        startDate: item.checkin_date,
+        endDate: item.checkout_date
       }));
-    };
-    const getCalendarList = async () => {
+    }
 
+    const getRoomScheduleList = async () => {
       try {
         const response = await get({
           url: getCheckinInfo,
-          data: {} 
+          data: {}
         });
-        // 处理响应数据
-        console.log(response.data);
-        // 可以将数据存储到状态中，例如:
-        state.infoList = response.data; // 假设响应数据在data字段中
-        console.log(state.infoList);
+        return response.data;
       } catch (error) {
         console.error('获取入住信息失败:', error);
+        return [];
       }
-      
-      state.infoList = processCalendarData(state.infoList);
-      
-      state.Tcalendar.addEventSource(state.infoList);
     };
+
+    const getCalendarList = async () => {
+      state.Tcalendar.getEventSources().forEach(item => {
+        item.remove();
+      });
+      const res = await getRoomScheduleList();
+      if (res) {
+        state.infoList = processCalendarData(res);
+        state.Tcalendar.addEventSource(state.infoList);
+      }
+
+    };
+
     // 点击计划查看
     const handleClick = info => {
       const detail = info.event._def;
-      // 接口查看详情但为了方便展示变量值直接写出来
-      plandetailId(detail.publicId).then(res => {
-        if (res) {
-          state.detailInfo = res.data.data;
-          console.log(res.data.data);
-          state.dialogCalendar = true;
-        }
-      });
+      const res = detail.extendedProps;
+      if (res) {
+        state.detailInfo = res; // Set the detailInfo state
+        console.log('state:', state.detailInfo);
+        state.dialogCalendar = true; // Open the dialog
+      }
     };
 
     const closeDialog = () => {
@@ -391,11 +386,6 @@ export default {
         state.detailData = {
           startDate: info.startStr,
           endDate: formatDate(new Date(info.endStr).getTime() - 24 * 3600 * 1000),
-          managerIds: 'managerIds', // 当前系统登陆人的id，业务场景只有创建人才可以编辑计划，其他人均只能查看
-          fileList: [],
-          startDateMinute: '',
-          endDateMinute: '',
-          isAllDay: 1
         };
       }
       state.drawerVisiable = true;
@@ -425,6 +415,7 @@ export default {
       getNext,
       getToday,
       closeDrawer,
+      getRoomScheduleList,
       getCalendarList,
       handleSetting,
       handleChangeType,
