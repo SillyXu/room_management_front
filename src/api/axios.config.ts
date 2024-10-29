@@ -25,7 +25,11 @@ service.interceptors.request.use(
       config.headers[CONTENT_TYPE] = APPLICATION_JSON;
     }
     if (config.headers[CONTENT_TYPE] === FORM_URLENCODED) {
-      config.data = qs.stringify(config.data);
+      if (config.data) {
+        config.data = qs.stringify(config.data);
+      } else {
+        config.data = ""; // or handle the empty data case appropriately
+      }
     }
     return config;
   },
@@ -36,11 +40,7 @@ service.interceptors.request.use(
 
 service.interceptors.response.use(
   (response: AxiosResponse): AxiosResponse => {
-    if (response.status === 200) {
-      return response;
-    } else {
-      throw new Error(response.status.toString());
-    }
+    return response;
   },
   (error) => {
     if (process.env.NODE_ENV === "development") {

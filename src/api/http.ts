@@ -27,26 +27,26 @@ function http<T = any>({
   afterRequest,
 }: HttpOption) {
   const successHandler = (res: AxiosResponse<Response<T>>) => {
-    if (res.data.code === 200) {
+    if (res.data.code >= 200 && res.data.code < 300) {
       return res.data
     }
     throw new Error(res.data.msg || '请求失败，未知异常')
   }
+  
   const failHandler = (error: Response<Error>) => {
     afterRequest && afterRequest()
     throw new Error(error.msg || '请求失败，未知异常')
   }
+  
   beforeRequest && beforeRequest()
   method = method || 'GET'
-  const params = Object.assign(
-    typeof data === 'function' ? data() : data || {},
-    {}
-  )
+  
+  // 使用 params 来处理 GET 请求的查询参数
+  const params = method === 'GET' ? (typeof data === 'function' ? data() : data || {}) : data;
+
   return method === 'GET'
     ? request.get(url, { params }).then(successHandler, failHandler)
-    : request
-        .post(url, params, { headers: headers })
-        .then(successHandler, failHandler)
+    : request.post(url, params, { headers: headers }).then(successHandler, failHandler)
 }
 
 export function get<T = any>({

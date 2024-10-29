@@ -49,12 +49,12 @@
       </el-table-column>
       <el-table-column label="入住时间" prop="checkin_date" :minwidth="120" show-overflow-tooltip>
         <template #default="{ row }">
-          <span>{{ row.checkin_date }} {{ row.startDateMinute }}</span>
+          <span>{{ row.checkin_date }}</span>
         </template>
       </el-table-column>
       <el-table-column label="离开时间" prop="checkout_date" :minwidth="120" show-overflow-tooltip>
         <template #default="{ row }">
-          <span>{{ row.checkout_date }} {{ row.endDateMinute }}</span>
+          <span>{{ row.checkout_date }}</span>
         </template>
       </el-table-column>
     </el-table>

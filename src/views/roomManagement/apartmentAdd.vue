@@ -89,9 +89,8 @@ const formItems = reactive([
     value: "",
     placeholder: "请选择房间类型",
     selectOptions: [
-      { label: "标准间", value: "standard" },
-      { label: "豪华间", value: "luxury" },
-      { label: "套房", value: "suite" },
+      { label: "标准间", value: "标准间" },
+      { label: "豪华间", value: "豪华间" }
     ],
     validator: ({ value = "", placeholder = "" }) => {
       if (!value) {
@@ -193,9 +192,11 @@ function submit() {
         // 检查响应中的状态码或特定字段来判断是否成功
         if (response.code === 200 || response.code === 0 || response.code === 201) { // 假设200或code为0表示成功
           ElMessage.success("保存成功");
-          refreshPage(); // 刷新页面
+          setTimeout(refreshPage, 1000);// 刷新页面
+        } else if (response.code === 203) {
+          ElMessage.warning("房间号已存在");
         } else {
-          ElMessage.error("保存失败，请检查输入信息");
+          ElMessage.error(response.data.msg);
         }
         submitLoading.value = false;
       })
@@ -204,7 +205,7 @@ function submit() {
         console.error("Error:", error);
         submitLoading.value = false;
       });
-  }
+}
 }
 </script>
 

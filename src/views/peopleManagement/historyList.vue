@@ -17,7 +17,6 @@
           <el-table-column v-for="item of tableColumns" :key="item.prop" :label="item.label" :prop="item.prop"
             align="center">
             <template v-if="item.prop === 'actions'" #default="scope">
-              <el-button plain type="primary" size="small" @click="onUpdateItem(scope.row)">编辑</el-button>
               <el-button plain type="danger" size="small" @click="onDeleteItem(scope.row)">删除</el-button>
             </template>
           </el-table-column>
@@ -35,7 +34,8 @@
 
 <script lang="ts" setup>
 import { get, post, Response } from "@/api/http";
-import { deleteRoom, getAllRooms, updateRoomInfo } from "@/api/url";
+import { getCheckinInfo, deleteCheckin, updateCheckinInfo } from "@/api/url";
+import { formatDate } from '@/utils/formatTime';
 import type { BaseFormType, DialogType } from "@/components/types";
 import { computed, h, onMounted, reactive, ref } from "vue";
 import { ElInput, ElMessage, ElMessageBox } from "element-plus";
@@ -44,46 +44,40 @@ import { useDataTable } from "@/hooks";
 import { FormRenderItem } from "@/components/common/FormRender";
 const DP_CODE_FLAG = "dp_code_";
 
-// 定义Apartment的类型或接口
-interface Apartment {
-  id: number;
-  room_name: string;
-  room_number: number;
-  floor: string;
-  room_type: string;
-  room_capacity: number;
-  room_price: number;
-  room_status: string;
+// 定义入住信息的类型
+interface CheckinInfo {
+  checkin_id: number;
+  occupant_name: string;
+  employee_id: string;
+  room_number: string;
+  checkin_date: string;
+  checkout_date: string;
 }
 
 const tableColumns = reactive([
   {
-    label: "房间名",
-    prop: "room_name",
+    label: "人员名",
+    prop: "occupant_name",
+  },
+  {
+    label: "一体化账号",
+    prop: "employee_id",
   },
   {
     label: "房间号",
     prop: "room_number",
   },
   {
-    label: "楼层",
-    prop: "floor",
+    label: "入住时间",
+    prop: "checkin_date",
   },
   {
-    label: "房间类型",
-    prop: "room_type",
+    label: "离店时间",
+    prop: "checkout_date",
   },
   {
-    label: "房间容量",
-    prop: "room_capacity",
-  },
-  {
-    label: "房间价格",
-    prop: "room_price",
-  },
-  {
-    label: "房间状态",
-    prop: "room_status",
+    label: "出差原因",
+    prop: "reason",
   },
   {
     label: "操作",
@@ -95,8 +89,8 @@ const tableColumns = reactive([
 const fetchApartmentInfo = async () => {
   try {
     const response = await get<[]>({
-      url: getAllRooms,
-      data: {} // 如果不需要传递数据，可以这样写
+      url: getCheckinInfo,
+      data: { is_historical:1 } // 如果不需要传递数据，可以这样写
       // 或者如果你需要传递数据，例如一个id:
       // data: { id: 123 }
     });
@@ -109,8 +103,7 @@ const dialog = ref<DialogType>();
 const baseForm = ref();
 const dialogTitle = ref("添加房间");
 const { tableConfig, tableLoading, dataList, handleSuccess } =
-  useDataTable<RoomModelType>();
-
+  useDataTable<ApartmentModelType>();
 const depCodeFormItem: FormRenderItem = {
   label: "房间号",
   type: "input",
@@ -151,13 +144,13 @@ const depCodeFormItem: FormRenderItem = {
 };
 const formItems = reactive<FormItem[]>([
   {
-    label: "房间名",
+    label: "姓名",
     type: "input",
-    name: "room_name",
+    name: "occupant_name",
     value: ref(""),
     maxLength: 50,
     inputType: "text",
-    placeholder: "请输入房间名",
+    placeholder: "请输入人员名",
     validator: (item: any) => {
       if (!item.value) {
         ElMessage.error(item.placeholder);
@@ -167,34 +160,35 @@ const formItems = reactive<FormItem[]>([
     },
     reset() {
       this.value = "";
-      this.disabled = true;
+    },
+  },
+  {
+    label: "工号",
+    type: "input",
+    name: "employee_id",
+    value: ref(""),
+    maxLength: 50,
+    inputType: "text",
+    placeholder: "请输入一体化账号",
+    validator: (item: any) => {
+      if (!item.value) {
+        ElMessage.error(item.placeholder);
+        return false;
+      }
+      return true;
+    },
+    reset() {
+      this.value = "";
     },
   },
   {
     label: "房间号",
     type: "input",
     name: "room_number",
-    value: "",
-    maxLength: 10,
-    disabled: true, // Set to true to prevent changes
-    inputType: "text",
-    placeholder: "房间号不可更改",
-    validator: (item: any) => {
-      return true; // Always return true since it's disabled
-    },
-    reset() {
-      this.value = "";
-      this.disabled = true; // Keep it disabled
-    },
-  },
-  {
-    label: "楼层",
-    type: "input",
-    name: "floor",
     value: ref(""),
     maxLength: 50,
     inputType: "text",
-    placeholder: "请输入楼层",
+    placeholder: "请输入房间号",
     validator: (item: any) => {
       if (!item.value) {
         ElMessage.error(item.placeholder);
@@ -207,30 +201,13 @@ const formItems = reactive<FormItem[]>([
     },
   },
   {
-    label: "类型：",
-    type: "select",
-    name: "room_type",
-    value: ref(0),
-    placeholder: "请选择房间类型",
-    selectOptions: [
-      { label: "标准间", value: "标准间" },
-      { label: "豪华间", value: "豪华间" }
-    ],
-    validator: ({ value = "", placeholder = "" }) => {
-      if (!value) {
-        ElMessage.error(placeholder);
-        return false;
-      }
-      return true;
-    },
-  },
-  {
-    label: "房间容量",
-    type: "input",
-    name: "room_capacity",
-    value: ref(0),
-    inputType: "number",
-    placeholder: "请输入房间容量",
+    label: "到店时间",
+    type: "date",
+    name: "checkin_date",
+    value: ref(""),
+    maxLength: 50,
+    inputType: "date",
+    placeholder: "请选择到店时间",
     validator: (item: any) => {
       if (!item.value) {
         ElMessage.error(item.placeholder);
@@ -239,16 +216,17 @@ const formItems = reactive<FormItem[]>([
       return true;
     },
     reset() {
-      this.value = 0;
+      this.value = "";
     },
   },
   {
-    label: "房间价格",
-    type: "input",
-    name: "room_price",
-    value: ref(0),
-    inputType: "number",
-    placeholder: "请输入房间价格",
+    label: "离店时间",
+    type: "date",
+    name: "checkout_date",
+    value: ref(""),
+    maxLength: 50,
+    inputType: "date",
+    placeholder: "请选择离店时间",
     validator: (item: any) => {
       if (!item.value) {
         ElMessage.error(item.placeholder);
@@ -257,96 +235,29 @@ const formItems = reactive<FormItem[]>([
       return true;
     },
     reset() {
-      this.value = 0;
+      this.value = "";
     },
   },
   {
-    label: "状态：",
+    label: "出差原因",
     type: "select",
-    name: "room_status",
-    value: ref(0),
-    placeholder: "请选择房间状态",
-    disabled: true,
+    name: "reason",
+    value: ref("因公"),
     selectOptions: [
-      { label: "空闲", value: "空闲" },
-      { label: "使用中", value: "使用中" },
-      { label: "维修中", value: "维修中" },
-      { label: "报废", value: "报废" },
+      { label: "因公", value: "因公" },
+      { label: "因私", value: "因私" },
     ],
-    validator: ({ value = "", placeholder = "" }) => {
-      if (!value) {
-        ElMessage.error(placeholder);
-        return false;
-      }
-      return true;
+    placeholder: "请选择出差原因",
+    reset() {
+      this.value = "因公"; // 默认值
     },
   },
 ]);
 
-const onUpdateItem = (item: any) => {
-  dialogTitle.value = "编辑房间";
-  formItems.forEach((it) => {
-    const propName = (item as any)[it.name];
-    it.value = propName; // 设置表单值
-  });
-
-  // 根据某个条件决定是否禁用
-  if (item.room_status === "使用中") { // 示例条件
-      formItems.forEach((item) => {
-        if (item.name === "room_status") {
-          item.disabled = true; // Disable room status
-        }
-      });
-    } else {
-      formItems.forEach((item) => {
-        if (item.name === "room_status") {
-          item.disabled = false; // 启用
-        }
-      });
-    }
-
-
-
-  dialog.value?.show(() => {
-    if (!baseForm.value?.checkParams()) {
-      return;
-    }
-    (dialog.value as any).loading = true;
-
-    const formData = {
-      room_name: formItems[0].value,
-      room_number: formItems[1].value,
-      floor: formItems[2].value,
-      room_type: formItems[3].value,
-      room_capacity: formItems[4].value,
-      room_price: formItems[5].value,
-      room_status: formItems[6].value,
-    };
-
-    post({
-      url: updateRoomInfo,
-      data: formData,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    })
-      .then((response: Response) => {
-        if (response.code === 200 || response.code === 0 || response.code === 201) {
-          ElMessage.success("修改成功");
-          setTimeout(refreshPage, 1000);
-        } else {
-          ElMessage.error("修改失败，请检查输入信息");
-        }
-      })
-      .catch(error => {
-        ElMessage.error("修改失败，请检查网络或稍后再试");
-        console.error("Error:", error);
-      });
-  });
-};
 const doRefresh = () => {
   get({
-    url: getAllRooms,
+    url: getCheckinInfo,
+    data: { is_historical:1 } 
   }).then(handleSuccess);
 };
 
@@ -354,25 +265,25 @@ const doRefresh = () => {
 function refreshPage() {
   location.reload();
 }
-
 function filterItems(
-  srcArray: Array<Apartment>,
-  filterItem: Apartment
+  srcArray: Array<ApartmentModelType>,
+  filterItem: ApartmentModelType
 ) {
   for (let index = 0; index < srcArray.length; index++) {
     const element = srcArray[index];
     if (element.id === filterItem.id) {
+
       srcArray.splice(index, 1);
       return;
     }
   }
 }
 const onDeleteItem = (item: any) => {
-  ElMessageBox.confirm("确定要删除房间信息，删除后不可恢复？", "提示")
+  ElMessageBox.confirm("确定要删除历史记录吗，删除后无法恢复", "提示")
     .then(() => {
-      const formData = { room_number: item.room_number };
+      const formData = { checkin_id: item.checkin_id };
       post({
-        url: deleteRoom,
+        url: deleteCheckin,
         data: formData,
         headers: {
           'Content-Type': 'application/json',
@@ -395,9 +306,7 @@ const onDeleteItem = (item: any) => {
 };
 
 onMounted(doRefresh);
-
 </script>
-
 <style lang="scss" scoped>
 @media screen and (max-width: 768px) {
   .form-wrapper {

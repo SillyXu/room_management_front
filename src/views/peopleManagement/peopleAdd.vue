@@ -27,6 +27,7 @@
 <script lang="ts" setup>
 import { ElMessage } from "element-plus";
 import { reactive, ref, onMounted ,shallowReactive } from "vue";
+import { formatDate } from '@/utils/formatTime';
 import { post, Response } from "@/api/http";
 import { addCheckinInfo } from "@/api/url";
 
@@ -158,10 +159,11 @@ function submit() {
       occupant_name: formItems[0].value,
       employee_id: formItems[1].value,
       room_number: formItems[2].value,
-      checkin_date: formItems[3].value,
-      checkout_date: formItems[4].value,
+      checkin_date: formatDate(formItems[3].value),
+      checkout_date: formatDate(formItems[4].value),
       reason: reason.value,
     };
+    console.log(formData);
 
     post({
       url: addCheckinInfo,
@@ -174,7 +176,7 @@ function submit() {
         // 检查响应中的状态码或特定字段来判断是否成功
         if (response.code === 200 || response.code === 0) { // 假设200或code为0表示成功
           ElMessage.success("保存成功");
-          refreshPage(); // 刷新页面
+          setTimeout(refreshPage, 1000);
         } else {
           ElMessage.error("保存失败，请检查输入信息");
         }

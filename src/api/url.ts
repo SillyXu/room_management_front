@@ -34,6 +34,12 @@ export const uploadRoomImage = "/uploadRoomImage";
 
 export const getApartmentInfo = "/getApartmentInfo";
 
+export const deleteRoom = "/deleteRoom";
+
+export const updateRoomInfo = "/updateRoomInfo";
+
+export const getAllRooms = "/getAllRooms";
+
 export const setPeopleInfo = "/setPeopleInfo";
 
 export const getPeopleInfo = "/getPeopleInfo";
@@ -41,5 +47,11 @@ export const getPeopleInfo = "/getPeopleInfo";
 export const addCheckinInfo = "/addCheckinInfo";
 
 export const getCheckinInfo = "/getCheckinInfo";
+
+export const updateCheckinInfo = "/updateCheckinInfo";
+
+export const checkoutCheckin = "/checkoutCheckin";
+
+export const deleteCheckin = "/deleteCheckin";
 
 export const baseAddress  = "http://localhost:5567/";
